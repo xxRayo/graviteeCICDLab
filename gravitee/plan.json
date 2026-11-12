@@ -33,7 +33,7 @@
             "addHeaders": true,
             "rate": {
               "useKeyOnly": false,
-              "limit": 5,
+              "limit": 10,
               "periodTime": 1,
               "periodTimeUnit": "MINUTES",
               "key": ""
