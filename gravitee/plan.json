@@ -1,0 +1,50 @@
+{
+  "definitionVersion": "V4",
+  "name": "APIKEY Usuarios",
+  "description": "Plan API Key con rate limiting",
+  "mode": "STANDARD",
+  "security": {
+    "type": "API_KEY",
+    "configuration": {
+      "source": "HEADER"
+    }
+  },
+  "validation": "MANUAL",
+  "flows": [
+    {
+      "name": "Rate Limiting",
+      "enabled": true,
+      "selectors": [
+        {
+          "type": "HTTP",
+          "path": "/",
+          "pathOperator": "STARTS_WITH",
+          "methods": []
+        }
+      ],
+      "request": [
+        {
+          "name": "Rate Limiting",
+          "enabled": true,
+          "policy": "rate-limit",
+          "configuration": {
+            "errorStrategy": "FALLBACK_PASS_TROUGH",
+            "async": false,
+            "addHeaders": true,
+            "rate": {
+              "useKeyOnly": false,
+              "limit": 5,
+              "periodTime": 1,
+              "periodTimeUnit": "MINUTES",
+              "key": ""
+            }
+          }
+        }
+      ],
+      "response": [],
+      "subscribe": [],
+      "publish": [],
+      "tags": []
+    }
+  ]
+}
