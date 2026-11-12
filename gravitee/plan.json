@@ -41,7 +41,18 @@
           }
         }
       ],
-      "response": [],
+      "response": [
+        {
+          "name": "Limpiar respuesta",
+          "description": "Quita id, role y created",
+          "enabled": true,
+          "policy": "json-to-json",
+          "configuration": {
+            "overrideContentType": true,
+            "specification": "[{\"operation\":\"remove\",\"spec\":{\"id\":\"\",\"role\":\"\",\"created\":\"\"}}]"
+          }
+        }
+      ],
       "subscribe": [],
       "publish": [],
       "tags": []
