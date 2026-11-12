@@ -1,0 +1,66 @@
+name: Gravitee CI/CD
+
+# ¿Cuándo se ejecuta?
+#  - pull_request hacia dev: solo VALIDA los JSON (no toca Gravitee)
+#  - push a dev (= cuando haces merge del PR): valida y DESPLIEGA en Gravitee
+#  - workflow_dispatch: botón "Run workflow" en la pestaña Actions (elige la rama dev)
+on:
+  pull_request:
+    branches: [dev]
+    paths:
+      - "gravitee/**"
+      - "scripts/**"
+      - ".github/workflows/gravitee-cicd.yml"
+  push:
+    branches: [dev]
+    paths:
+      - "gravitee/**"
+      - "scripts/**"
+      - ".github/workflows/gravitee-cicd.yml"
+  workflow_dispatch:
+
+# Evita que dos despliegues corran al mismo tiempo sobre la misma API
+concurrency:
+  group: gravitee-dev
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validar definición
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código del repo
+        uses: actions/checkout@v4
+
+      - name: Validar JSON y campos obligatorios
+        run: |
+          jq empty gravitee/api.json gravitee/plan.json
+          jq -e '.name and .apiVersion and .definitionVersion == "V4" and .type == "PROXY"
+                 and (.listeners | length > 0) and (.endpointGroups | length > 0)' \
+             gravitee/api.json > /dev/null || { echo "::error::api.json incompleto"; exit 1; }
+          jq -e '.name and .definitionVersion == "V4" and .security.type and (.flows | length > 0)' \
+             gravitee/plan.json > /dev/null || { echo "::error::plan.json incompleto"; exit 1; }
+
+      - name: Mostrar rate limit configurado
+        run: |
+          RATE=$(jq -r '[.flows[].request[] | select(.policy=="rate-limit") | .configuration.rate
+                        | "\(.limit) peticiones / \(.periodTime) \(.periodTimeUnit)"] | first // "sin rate limit"' gravitee/plan.json)
+          echo "Rate limit en este commit: $RATE"
+          echo "### Rate limit en este commit: **$RATE**" >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Crear / actualizar API en Gravitee
+    needs: validate
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar el código del repo
+        uses: actions/checkout@v4
+
+      - name: Ejecutar deploy-api.sh
+        env:
+          GRAVITEE_MGMT: ${{ vars.GRAVITEE_MGMT }}
+          GRAVITEE_ENV: ${{ vars.GRAVITEE_ENV }}
+          GRAVITEE_TOKEN: ${{ secrets.GRAVITEE_TOKEN }}
+          DEPLOY_LABEL: "GH#${{ github.run_number }} ${{ github.sha }}"
+        run: bash scripts/deploy-api.sh

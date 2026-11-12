@@ -1,0 +1,4 @@
+# Nunca subas tokens ni api keys
+.env
+*.env
+secrets*
