@@ -1,0 +1,90 @@
+{
+  "name": "Usuarios",
+  "apiVersion": "1.0.0",
+  "description": "API para laboratorio CI/CD con GitHub Actions",
+  "definitionVersion": "V4",
+  "type": "PROXY",
+  "listeners": [
+    {
+      "type": "HTTP",
+      "paths": [
+        {
+          "path": "/v1/users/",
+          "overrideAccess": true
+        }
+      ],
+      "pathMappings": [],
+      "requestValidation": {
+        "rejectNullByte": true
+      },
+      "entrypoints": [
+        {
+          "type": "http-proxy",
+          "qos": "AUTO",
+          "configuration": {}
+        }
+      ],
+      "servers": []
+    }
+  ],
+  "endpointGroups": [
+    {
+      "name": "Default HTTP proxy group",
+      "type": "http-proxy",
+      "loadBalancer": {
+        "type": "ROUND_ROBIN"
+      },
+      "sharedConfiguration": {
+        "http": {
+          "version": "HTTP_1_1",
+          "keepAlive": true,
+          "keepAliveTimeout": 30000,
+          "connectTimeout": 3000,
+          "pipelining": false,
+          "readTimeout": 10000,
+          "useCompression": true,
+          "propagateClientHost": false,
+          "idleTimeout": 0,
+          "followRedirects": false,
+          "maxConcurrentConnections": 20,
+          "maxWaitQueueSize": -1,
+          "maxConnectionLifetime": 0
+        },
+        "proxy": {
+          "enabled": false,
+          "useSystemProxy": false
+        },
+        "ssl": {
+          "hostnameVerifier": true,
+          "trustAll": false,
+          "trustStore": {
+            "type": "NONE"
+          },
+          "keyStore": {
+            "type": "NONE"
+          }
+        }
+      },
+      "endpoints": [
+        {
+          "name": "Default HTTP proxy",
+          "type": "http-proxy",
+          "weight": 1,
+          "inheritConfiguration": true,
+          "secondary": false,
+          "configuration": {
+            "target": "https://credibanco-gravitee-demo01.free.beeceptor.com/v1/users"
+          }
+        }
+      ]
+    }
+  ],
+  "analytics": {
+    "enabled": true
+  },
+  "flowExecution": {
+    "mode": "DEFAULT",
+    "matchRequired": false
+  },
+  "flows": []
+}
